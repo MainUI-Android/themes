@@ -1,0 +1,57 @@
+name: Themes
+
+# Builds every theme in kit/themes/. On main, publishes them as the assets of the "themes"
+# release, which MainUI's Theme Store reads: catalog.json, <id>.zip and <id>.png.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: themes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # The same Pillow as the committed previews and MainUI's bundled theme, so builds match.
+      - run: pip install Pillow==12.3.0
+
+      - name: Build
+        run: python3 kit/build.py --release dist/release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: themes
+          path: dist/release
+
+      - name: Publish
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=themes
+          git tag -f "$tag"
+          git push -f origin "refs/tags/$tag"
+          notes="Every theme in this repository, built from ${GITHUB_SHA::10}. MainUI's Theme Store installs them; each zip also works as an OnionOS theme. Licensed under CC BY-NC 4.0 (fonts under the SIL Open Font License)."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --notes "$notes" --latest
+          else
+            gh release create "$tag" --title "MainUI themes" --notes "$notes" --latest
+          fi
+          gh release upload "$tag" dist/release/* --clobber
+          # Themes no longer in the repository leave the release too.
+          gh release view "$tag" --json assets --jq '.assets[].name' | while read -r a; do
+            [ -e "dist/release/$a" ] || gh release delete-asset "$tag" "$a" -y
+          done
