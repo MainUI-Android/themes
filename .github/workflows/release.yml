@@ -25,8 +25,8 @@ jobs:
         with:
           python-version: "3.13"
 
-      # The same Pillow as the committed previews and MainUI's bundled theme, so builds match.
-      - run: pip install Pillow==12.3.0
+      # The same versions as the committed previews and MainUI's bundled theme, so builds match.
+      - run: pip install -r kit/requirements.txt
 
       - name: Build
         run: python3 kit/build.py --release dist/release

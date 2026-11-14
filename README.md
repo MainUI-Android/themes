@@ -27,10 +27,10 @@ with its own fonts and its own picture for every system MainUI knows.
 
 ## Building
 
-The themes are drawn by Python code with Pillow, nothing by hand:
+The themes are drawn by Python code (Pillow, numpy), nothing by hand:
 
 ```
-pip install Pillow==12.3.0
+pip install -r kit/requirements.txt
 python3 kit/build.py                      # every theme, into dist/themes/
 python3 kit/build.py frost --mock dist/mock   # one theme, plus mock screens of MainUI with it
 ```

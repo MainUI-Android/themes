@@ -1,0 +1,3 @@
+# The versions CI uses: the same ones give byte-identical themes.
+Pillow==12.3.0
+numpy==2.5.3
